@@ -1,17 +1,8 @@
-// src/app/App.tsx
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { Container } from '@/components/layout/Container';
 import { Header } from '@/components/layout/Header';
 
-/**
- * Layout raíz de la app:
- * - Header global con navegación
- * - <Outlet/> para renderizar rutas hijas
- *
- * Nota: Las páginas Dashboard/Metrics también dibujan su propio Header.
- * Si prefieres solo un Header global, elimina los Header locales en esas páginas.
- */
 const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
@@ -42,6 +33,19 @@ const App: React.FC = () => {
               }
             >
               Métricas
+            </NavLink>
+
+            {/* NUEVO: acceso a la página de administración */}
+            <NavLink
+              to="/admin/ingest"
+              className={({ isActive }) =>
+                [
+                  'text-sm font-medium hover:text-red-600',
+                  isActive ? 'text-red-600' : 'text-neutral-700 dark:text-neutral-300',
+                ].join(' ')
+              }
+            >
+              Admin
             </NavLink>
           </nav>
         }
