@@ -13,7 +13,7 @@ export class PilotService {
 
     /** Alta o actualización de un piloto (asegura índices y su RingBuffer). */
     upsertPilot(id: string, name: string, team: Team): void {
-        const pilot = new Pilot(asPilotId(id), name, team);
+        const pilot = new Pilot(asPilotId(id), name?.trim() ?? '', team);
         this.store.upsertPilot(pilot);
     }
 
@@ -47,11 +47,12 @@ export class PilotService {
             pilotId: asPilotId(sp.pilotId),
             position: sp.position as Position,
             lastLapMs: sp.lastLapMs,
-            points: sp.points,
+            points: sp.points ?? 0,
             anomaly: sp.anomaly,
             ts: sp.ts,
         });
 
+        // append garantiza el upsert del piloto con fallback de nombre/equipo
         this.store.append(sample, { name: sp.pilotName, team: sp.team });
         return sample;
     }
@@ -75,16 +76,18 @@ export class PilotService {
     }
 
     /**
-     * Vista agregada simple: “leaderboard” ordenado por puntos (desc),
-     * usando la última muestra disponible de cada piloto.
+     * Leaderboard por puntos (desc).
+     * - Si se provee `windowMs`, acumula puntos de ese período.
+     * - Si no, acumula **todo lo que haya** en el ring buffer del piloto.
+     * Mantiene position/lastLap/anomaly/ts de la **última** muestra como estado actual.
      */
-    getLeaderboard(): ReadonlyArray<{
+    getLeaderboard(windowMs?: Millis): ReadonlyArray<{
         pilotId: PilotId;
         pilotName: string;
         team: Team;
         position?: Position;
         lastLapMs?: Millis;
-        points: number;
+        points: number;      // ahora es ACUMULADO
         anomaly?: boolean;
         ts?: Millis;
     }> {
@@ -99,8 +102,23 @@ export class PilotService {
             ts?: Millis;
         }> = [];
 
+        // “Ventana” por defecto: todo lo retenido por el ring buffer.
+        const effectiveWindow: Millis =
+            (typeof windowMs === 'number' && Number.isFinite(windowMs) && windowMs > 0)
+                ? windowMs
+                : (Number.MAX_SAFE_INTEGER as Millis);
+
         for (const { pilot, latest } of this.store.getAllLatest()) {
-            const row: {
+            // Sumar puntos de TODAS las muestras dentro de la ventana
+            const samples = this.store.getRecentByPilot(pilot.id, effectiveWindow);
+            const totalPoints = samples.reduce((acc, s) => acc + (s.points ?? 0), 0);
+
+            const row = {
+                pilotId: pilot.id,
+                pilotName: pilot.name,
+                team: pilot.team,
+                points: totalPoints,
+            } as {
                 pilotId: PilotId;
                 pilotName: string;
                 team: Team;
@@ -109,20 +127,25 @@ export class PilotService {
                 points: number;
                 anomaly?: boolean;
                 ts?: Millis;
-            } = {
-                pilotId: pilot.id,
-                pilotName: pilot.name,
-                team: pilot.team,
-                points: latest?.points ?? 0,
             };
+
+            // Estado "actual" desde la última muestra
             if (latest?.position !== undefined) row.position = latest.position;
             if (latest?.lastLapMs !== undefined) row.lastLapMs = latest.lastLapMs;
             if (latest?.anomaly !== undefined) row.anomaly = latest.anomaly;
             if (latest?.ts !== undefined) row.ts = latest.ts;
+
             rows.push(row);
         }
 
-        rows.sort((a, b) => b.points - a.points);
+        // Orden por puntos desc; si empatan, el más reciente primero
+        rows.sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            const ta = a.ts ?? 0;
+            const tb = b.ts ?? 0;
+            return tb - ta;
+        });
+
         return rows;
     }
 }

@@ -9,6 +9,20 @@ type Busy = 'idle' | 'creatingPilot' | 'ingesting';
 const cardClass =
     'rounded-2xl border border-neutral-800 bg-neutral-900/60 p-5 shadow-xl shadow-black/30';
 
+// Opciones de escuderías (UI). Envío sigue usando la propiedad `team`.
+const SCUDERIAS = [
+    'Ferrari',
+    'Mercedes',
+    'RedBull',
+    'McLaren',
+    'AstonMartin',
+    'Alpine',
+    'Williams',
+    'RB',
+    'Sauber',
+    'Haas',
+] as const;
+
 export default function AdminIngestPage() {
     const [busy, setBusy] = useState<Busy>('idle');
 
@@ -31,7 +45,7 @@ export default function AdminIngestPage() {
         async (e: React.FormEvent) => {
             e.preventDefault();
             if (!pilotValid) {
-                toast.error('Completa id, nombre y equipo.');
+                toast.error('Completa id, nombre y escudería.');
                 return;
             }
             setBusy('creatingPilot');
@@ -125,8 +139,11 @@ export default function AdminIngestPage() {
 
                     <form onSubmit={submitPilot} className="space-y-4">
                         <div>
-                            <label className="mb-1 block text-sm text-neutral-300">ID</label>
+                            <label className="mb-1 block text-sm text-neutral-300" htmlFor="pilot-id">
+                                ID
+                            </label>
                             <input
+                                id="pilot-id"
                                 className="w-full rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 outline-none focus:ring-2 focus:ring-red-500"
                                 placeholder="lec16"
                                 value={pilot.id}
@@ -139,8 +156,11 @@ export default function AdminIngestPage() {
                         </div>
 
                         <div>
-                            <label className="mb-1 block text-sm text-neutral-300">Nombre</label>
+                            <label className="mb-1 block text-sm text-neutral-300" htmlFor="pilot-name">
+                                Nombre
+                            </label>
                             <input
+                                id="pilot-name"
                                 className="w-full rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 outline-none focus:ring-2 focus:ring-red-500"
                                 placeholder="Charles Leclerc"
                                 value={pilot.name}
@@ -150,14 +170,25 @@ export default function AdminIngestPage() {
                         </div>
 
                         <div>
-                            <label className="mb-1 block text-sm text-neutral-300">Equipo</label>
-                            <input
+                            <label className="mb-1 block text-sm text-neutral-300" htmlFor="pilot-team">
+                                Escudería
+                            </label>
+                            <select
+                                id="pilot-team"
                                 className="w-full rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 outline-none focus:ring-2 focus:ring-red-500"
-                                placeholder="Ferrari"
                                 value={pilot.team}
                                 onChange={(e) => setPilot((p) => ({ ...p, team: e.target.value }))}
                                 required
-                            />
+                            >
+                                <option value="" disabled>
+                                    Selecciona una escudería…
+                                </option>
+                                {SCUDERIAS.map((t) => (
+                                    <option key={t} value={t}>
+                                        {t}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
                         <div className="pt-2">
@@ -182,21 +213,25 @@ export default function AdminIngestPage() {
                     <form onSubmit={submitIngest} className="space-y-4">
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
-                                <label className="mb-1 block text-sm text-neutral-300">Pilot ID</label>
+                                <label className="mb-1 block text-sm text-neutral-300" htmlFor="event-pilot-id">
+                                    Pilot ID
+                                </label>
                                 <input
+                                    id="event-pilot-id"
                                     className="w-full rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
                                     placeholder="lec16"
                                     value={eventDto.pilotId}
-                                    onChange={(e) =>
-                                        setEventDto((p) => ({ ...p, pilotId: e.target.value }))
-                                    }
+                                    onChange={(e) => setEventDto((p) => ({ ...p, pilotId: e.target.value }))}
                                     required
                                 />
                             </div>
 
                             <div>
-                                <label className="mb-1 block text-sm text-neutral-300">Posición</label>
+                                <label className="mb-1 block text-sm text-neutral-300" htmlFor="event-position">
+                                    Posición
+                                </label>
                                 <input
+                                    id="event-position"
                                     type="number"
                                     min={1}
                                     className="w-full rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
@@ -212,40 +247,51 @@ export default function AdminIngestPage() {
                             </div>
 
                             <div>
-                                <label className="mb-1 block text-sm text-neutral-300">Nombre</label>
+                                <label className="mb-1 block text-sm text-neutral-300" htmlFor="event-pilot-name">
+                                    Nombre
+                                </label>
                                 <input
+                                    id="event-pilot-name"
                                     className="w-full rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
                                     placeholder="Charles Leclerc"
                                     value={eventDto.pilotName}
-                                    onChange={(e) =>
-                                        setEventDto((p) => ({ ...p, pilotName: e.target.value }))
-                                    }
+                                    onChange={(e) => setEventDto((p) => ({ ...p, pilotName: e.target.value }))}
                                     required
                                 />
                             </div>
 
                             <div>
-                                <label className="mb-1 block text-sm text-neutral-300">Equipo</label>
-                                <input
+                                <label className="mb-1 block text-sm text-neutral-300" htmlFor="event-team">
+                                    Escudería
+                                </label>
+                                <select
+                                    id="event-team"
                                     className="w-full rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
-                                    placeholder="Ferrari"
                                     value={eventDto.team}
                                     onChange={(e) => setEventDto((p) => ({ ...p, team: e.target.value }))}
                                     required
-                                />
+                                >
+                                    <option value="" disabled>
+                                        Selecciona una escudería…
+                                    </option>
+                                    {SCUDERIAS.map((t) => (
+                                        <option key={t} value={t}>
+                                            {t}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div>
-                                <label className="mb-1 block text-sm text-neutral-300">
+                                <label className="mb-1 block text-sm text-neutral-300" htmlFor="event-last-lap">
                                     Última vuelta (M:SS.mmm)
                                 </label>
                                 <input
+                                    id="event-last-lap"
                                     className="w-full rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
                                     placeholder="1:21.345"
                                     value={eventDto.lastLapTime}
-                                    onChange={(e) =>
-                                        setEventDto((p) => ({ ...p, lastLapTime: e.target.value }))
-                                    }
+                                    onChange={(e) => setEventDto((p) => ({ ...p, lastLapTime: e.target.value }))}
                                     required
                                 />
                             </div>
@@ -256,9 +302,7 @@ export default function AdminIngestPage() {
                                     type="checkbox"
                                     className="h-4 w-4"
                                     checked={eventDto.anomalyDetected}
-                                    onChange={(e) =>
-                                        setEventDto((p) => ({ ...p, anomalyDetected: e.target.checked }))
-                                    }
+                                    onChange={(e) => setEventDto((p) => ({ ...p, anomalyDetected: e.target.checked }))}
                                 />
                                 <label htmlFor="anomaly" className="text-sm text-neutral-300">
                                     Anomalía detectada
@@ -277,7 +321,7 @@ export default function AdminIngestPage() {
                         </div>
 
                         <p className="pt-2 text-xs text-neutral-500">
-                            *Recuerda: /ingest **no** crea pilotos; para eso usa el formulario de la
+                            *Recuerda: /ingest <strong>no</strong> crea pilotos; para eso usa el formulario de la
                             izquierda.
                         </p>
                     </form>
